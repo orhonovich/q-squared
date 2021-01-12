@@ -1,0 +1,161 @@
+import argparse
+
+import numpy as np
+import pandas as pd
+import spacy
+
+import question_generation as qg
+import question_answering as qa
+from score import f1_score, clean_text
+
+INVALID_QUESTION = -1
+NO_ANS = '[CLS]'
+
+nlp = spacy.load("en_core_web_sm")
+
+
+def filter_questions(exp_ans, pred_ans):
+    if pred_ans == NO_ANS or NO_ANS in pred_ans:
+        return 'NO MATCH'
+    if clean_text(exp_ans) != clean_text(pred_ans):
+        return 'NO MATCH'
+    return 'VALID'
+
+
+def non_personal(question):
+    question_tok = nlp(question)
+    for tok in question_tok:
+        if tok.dep_ == 'nsubj':
+            if tok.text.lower() == 'i' or tok.text.lower() == 'you':
+                return False
+        elif tok.dep_ == 'poss':
+            if tok.text.lower() == 'my' or tok.text.lower() == 'your':
+                return False
+    return True
+
+
+def single_question_score(question, cand, response, knowledge):
+    pred_ans = qa.get_answer(question, response)
+
+    if filter_questions(cand, pred_ans) == 'VALID':
+        knowledge_ans = qa.get_answer(question, knowledge)
+        if knowledge_ans != NO_ANS:
+            return f1_score(cand, knowledge_ans)
+        else:
+            return 0
+    else:
+        return INVALID_QUESTION
+
+
+def get_response_score(response, knowledge, gen_method, single, remove_personal):
+    f1 = 0
+    num_questions = 0
+
+    candidates = qg.get_answer_candidates(response)
+    for cand in candidates:
+        if gen_method == 'greedy':
+            questions = [qg.get_question_greedy(cand, response)]
+        elif gen_method == 'beam':
+            questions = qg.get_questions_beam(cand, response)
+        else:
+            questions = qg.get_questions_sample(cand, response)
+
+        for question in questions:
+            if not remove_personal or non_personal(question):
+                question_score = single_question_score(question, cand, response, knowledge)
+                if question_score != INVALID_QUESTION:
+                    num_questions += 1
+                    f1 += question_score
+                    if single:
+                        break
+    if num_questions:
+        avg_f1 = f1 / num_questions
+    else:
+        avg_f1 = INVALID_QUESTION
+    return avg_f1
+
+
+def response_questions_stats(response, knowledge, gen_method, single, remove_personal):
+    num_questions = 0
+    num_no_ans = 0
+
+    candidates = qg.get_answer_candidates(response)
+    for cand in candidates:
+        if gen_method == 'greedy':
+            questions = [qg.get_question_greedy(cand, response)]
+        elif gen_method == 'beam':
+            questions = qg.get_questions_beam(cand, response)
+        else:
+            questions = qg.get_questions_sample(cand, response)
+
+        for question in questions:
+            if not remove_personal or non_personal(question):
+                pred_ans = qa.get_answer(question, response)
+
+                if filter_questions(cand, pred_ans) == 'VALID':
+                    num_questions += 1
+                    knowledge_ans = qa.get_answer(question, knowledge)
+                    if knowledge_ans == NO_ANS:
+                        num_no_ans += 1
+                    if single:
+                        break
+    return num_questions, num_no_ans
+
+
+def get_stats(in_path, gen_method, single, remove_personal):
+    num_questions = 0
+    num_no_ans = 0
+    df = pd.read_csv(in_path)
+    for _, row in df.iterrows():
+        q, no_ans = response_questions_stats(row['response'], row['knowledge'], gen_method, single, remove_personal)
+        num_questions += q
+        num_no_ans += no_ans
+
+    print("Total valid questions: {0}".format(num_questions))
+    print("No answer: {0}".format(num_no_ans / num_questions))
+
+
+def calc_scores(in_path, gen_method, single, remove_personal, out_path=''):
+    print(in_path, gen_method, single, remove_personal)
+    q_scores = []
+    df = pd.read_csv(in_path)
+
+    for _, row in df.iterrows():
+        res = get_response_score(row['response'], row['knowledge'], gen_method, single, remove_personal)
+        q_scores.append(res)
+
+    if out_path != '':
+        df['Q2'] = q_scores
+        df = df[df.Q2 >= 0]
+        df.to_csv(out_path)
+
+    valid_scores = [s for s in q_scores if s != -1]
+    print("total with at least 1 valid question:", len(valid_scores))
+    print("score:", np.mean(valid_scores))
+
+    return valid_scores
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--infile", type=str, required=True,
+                        help="Path to a csv file containing dialogue model outputs.")
+    parser.add_argument("--gen_method", type=str, required=True, choices=['greedy', 'beam', 'sampling'],
+                        help="Decoding method for question generation.")
+    parser.add_argument("--q_per_cand", type=str, choices=['single', 'multi'], default=['single'], required=False,
+                        help="Take only one question per candidate when using beam/sampling for decoding")
+    parser.add_argument("--personal", type=str, choices=['keep', 'remove'], default='keep', required=False,
+                        help="Whether to remove personal questions.")
+    parser.add_argument("--outfile", type=str, default='', required=False, help="Path to an output file")
+    args = parser.parse_args()
+
+    if args.q_per_cand == 'single':
+        single_q = True
+    else:
+        single_q = False
+
+    if args.personal == 'remove':
+        rm_personal = True
+    else:
+        rm_personal = False
+    calc_scores(args.infile, args.gen_method, single=single_q, remove_personal=rm_personal, out_path=args.outfile)
