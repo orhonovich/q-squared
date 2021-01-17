@@ -18,7 +18,7 @@ from allennlp.predictors.predictor import Predictor
 import allennlp_models.coref
 import re
 
-blacklist = ["i", "me", "my", "you", "your", "we", "our"]
+denylist = ["i", "me", "my", "you", "your", "we", "our"]
 det = ["the", "a", "an"]
 
 MARK_REMOVE = '#####'
@@ -75,10 +75,10 @@ def get_resolved_turn(previous, text):
         centroid = ' '.join(document[centroid_start:centroid_end+1])
 
         # Resolve
-        if centroid not in blacklist and centroid not in det:
+        if centroid not in denylist and centroid not in det:
             for span in cluster:
                 span_start = span[0]
-                if span_start >= current_start_idx != centroid_start and document[span_start].lower() not in blacklist:
+                if span_start >= current_start_idx != centroid_start and document[span_start].lower() not in denylist:
                     span_end = span[1]
                     if not (span_end == span_start and document[span_start].lower() in det):
                         document[span_start] = centroid
