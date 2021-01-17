@@ -12,24 +12,6 @@ def clean_text(text):
     return re.sub(' +', ' ', text).strip()
 
 
-# def clean_text(s):  # From: https://github.com/W4ngatang/qags/blob/master/qa_utils.py
-#     """Lower text and remove punctuation, articles and extra whitespace."""
-#     def remove_articles(text):
-#         return re.sub(r'\b(a|an|the|in|our)\b', ' ', text)
-#
-#     def white_space_fix(text):
-#         return ' '.join(text.split())
-#
-#     def remove_punc(text):
-#         exclude = set(string.punctuation)
-#         return ''.join(ch for ch in text if ch not in exclude)
-#
-#     def lower(text):
-#         return text.lower()
-#
-#     return white_space_fix(remove_articles(remove_punc(lower(s))))
-
-
 def f1_score(a_gold, a_pred):
     if a_pred == '':
         return 0
