@@ -66,3 +66,39 @@ python pipeline/run_pipeline.py \
       --outfile dodeca_inconsistent_beam_single_remove.csv
 ```
 
+Validation experiments:
+For score robustness, first run 
+```
+python baselines.py \
+      --infile dodeca_inconsistent_q2.csv \
+      --outfile dodeca_inconsistent_q2_baselines.csv
+```
+
+When the infile parametr is a csv file containing all the columns that exist in the data files, with an additional column of Q^2 scores. 
+Such file is obtained using the previous script, pipeline/run_pipeline.py.
+Run this script for each of the 4 data files, dodeca/memenet, consistent and inconsistent.
+
+Then, run
+```
+python score_robustness.py \
+      --incons_dodeca_f dodeca_inconsistent_q2.csv \
+      --cons_dodeca_f dodeca_consistent_q2.csv\
+	  --incons_memnet_f memnet_inconsistent_q2.csv \
+      --cons_memnet_f memnet_consistent_q2.csv
+```
+
+For system-level evalution, first run 
+```
+python pipeline/prepare_files.py \
+      --infile cross_anotation_q2.csv \
+      --outfile cross_anotation_q2_baselines.csv
+```
+
+When the infile parametr is a csv file obtained running pipeline/run_pipeline.py on the `cross_anotation.csv` file.
+Then, run
+```
+python sys_level.py \
+      --infile cross_anotation_q2_baselines.csv
+```
+
+
