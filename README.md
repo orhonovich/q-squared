@@ -7,7 +7,7 @@ Our approach is based on automatic question generation and question answering.
 ## Datasets
 
 The datasets are stored in the `data` folder. 
-The folder contains two files - consistent and inconsistent responses - for each of the two system. Each file contains 150 responses.
+The folder contains two files - consistent and inconsistent responses - for each of the two systems. Each file contains 150 responses.
 In addition, we add the cross anotation file, used in our validation experiments.
 
 The datasets are stored as pandas dataframes in csv files. Loading them should be as simple as:
@@ -55,7 +55,7 @@ For the coreference-resolution preprocessing:
 
 
 ### Usage
-To run Q^2, run `pipeline/run_pipeline.py` and specify the parametrs. 
+To run Q^2, run `pipeline/run_pipeline.py` and specify the parameters. 
 For example:
 ```
 python pipeline/run_pipeline.py \
