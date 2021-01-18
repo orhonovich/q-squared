@@ -123,3 +123,12 @@ def prepare_validation(in_path, out_path):
 
     df = add_baselines(df)
     df.to_csv(out_path)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--infile", type=str, required=True, help="Path to a csv file containing q^2 scores.")
+    parser.add_argument("--outfile", type=str, default='', required=False, help="Path to an output file")
+    args = parser.parse_args()
+
+    prepare_validation(args.infile, args.outfile)
