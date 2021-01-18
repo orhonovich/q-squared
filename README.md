@@ -1,11 +1,13 @@
 # Q^2
 
 Code and data accompanying the paper "Q^2: Evaluating Factual Consistency in Knowledge-Grounded Dialogues via Question Generation and Question Answering".
+Q^2 is a reference-less metric that aims to evaluate the factual consistency of knowledge-grounded dialogue systems.
+Our approach is based on automatic question generation and question answering.
 
 ## Using the Datasets
 
 The datasets are stored in the `data` folder. 
-The folder contains two file, for consistent and inconsistent responses, for each system.
+The folder contains two files: consistent and inconsistent responses, for each system. Each file contains 150 responses.
 In addition, we add the cross anotation file, used in our validation experiments.
 
 The datasets are stored as pandas dataframes in csv files. Loading them should be as simple as:
