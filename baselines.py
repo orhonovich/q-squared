@@ -100,3 +100,12 @@ def add_baselines(in_path, out_path):
     df['bertscore'] = F1.detach().numpy()
 
     df.to_csv(out_path)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--infile", type=str, required=True, help="Path to a csv file containing q^2 scores.")
+    parser.add_argument("--outfile", type=str, required=True, help="Path to an output file")
+    args = parser.parse_args()
+
+    add_baselines(args.infile, args.outfile)
