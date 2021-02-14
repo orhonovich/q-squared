@@ -75,7 +75,7 @@ python baselines.py \
       --outfile dodeca_inconsistent_q2_baselines.csv
 ```
 
-When the infile parametr is a csv file containing all the columns that exist in the data files, with an additional column of Q^2 scores. 
+When the infile parameter is a csv file containing all the columns that exist in the data files, with an additional column of Q^2 scores. 
 Such file is obtained using the previous script, pipeline/run_pipeline.py.
 Run this script for each of the 4 data files, dodeca/memenet, consistent and inconsistent.
 
@@ -95,7 +95,7 @@ python pipeline/prepare_files.py \
       --outfile cross_anotation_q2_baselines.csv
 ```
 
-When the infile parametr is a csv file obtained running pipeline/run_pipeline.py on the `cross_anotation.csv` file.
+When the infile parameter is a csv file obtained running pipeline/run_pipeline.py on the `cross_anotation.csv` file.
 Then, run
 ```
 python sys_level.py \
