@@ -23,13 +23,13 @@ import question_answering as qa
 from score import f1_score, clean_text
 
 INVALID_QUESTION = -1
-NO_ANS = '[CLS]'
+NO_ANS = ''
 
 nlp = spacy.load("en_core_web_sm")
 
 
 def filter_questions(exp_ans, pred_ans):
-    if pred_ans == NO_ANS or NO_ANS in pred_ans:
+    if pred_ans == NO_ANS:
         return 'NO MATCH'
     if clean_text(exp_ans) != clean_text(pred_ans):
         return 'NO MATCH'
@@ -54,16 +54,21 @@ def single_question_score(question, cand, response, knowledge):
     if filter_questions(cand, pred_ans) == 'VALID':
         knowledge_ans = qa.get_answer(question, knowledge)
         if knowledge_ans != NO_ANS:
-            return f1_score(cand, knowledge_ans)
+            return f1_score(cand, knowledge_ans), knowledge_ans
         else:
-            return 0
+            return 0, NO_ANS
     else:
-        return INVALID_QUESTION
+        return INVALID_QUESTION, INVALID_QUESTION
 
 
 def get_response_score(response, knowledge, gen_method, single, remove_personal):
     f1 = 0
     num_questions = 0
+
+    valid_questions = []
+    valid_cands = []
+    knowledge_answers = []
+    scores = []
 
     candidates = qg.get_answer_candidates(response)
     for cand in candidates:
@@ -76,17 +81,23 @@ def get_response_score(response, knowledge, gen_method, single, remove_personal)
 
         for question in questions:
             if not remove_personal or non_personal(question):
-                question_score = single_question_score(question, cand, response, knowledge)
+                question_score, knowledge_ans = single_question_score(question, cand, response, knowledge)
                 if question_score != INVALID_QUESTION:
                     num_questions += 1
                     f1 += question_score
+
+                    valid_questions.append(question)
+                    valid_cands.append(cand)
+                    knowledge_answers.append(knowledge_ans)
+                    scores.append(question_score)
+
                     if single:
                         break
     if num_questions:
         avg_f1 = f1 / num_questions
     else:
         avg_f1 = INVALID_QUESTION
-    return avg_f1
+    return avg_f1, valid_questions, valid_cands, knowledge_answers, scores
 
 
 def response_questions_stats(response, knowledge, gen_method, single, remove_personal):
@@ -129,19 +140,42 @@ def get_stats(in_path, gen_method, single, remove_personal):
     print("No answer: {0}".format(num_no_ans / num_questions))
 
 
-def calc_scores(in_path, gen_method, single, remove_personal, out_path=''):
+def calc_scores(in_path, gen_method, single, remove_personal, out_path='', save_steps=False):
     print(in_path, gen_method, single, remove_personal)
+    print(save_steps, flush=True)
     q_scores = []
     df = pd.read_csv(in_path)
 
+    all_questions = []
+    all_cands = []
+    all_answers = []
+    all_scores = []
+    all_responses = []
+    all_knowledge = []
+
     for _, row in df.iterrows():
-        res = get_response_score(row['response'], row['knowledge'], gen_method, single, remove_personal)
+        res, res_questions, res_cands, res_answers, res_scores =\
+            get_response_score(row['response'], row['knowledge'], gen_method, single, remove_personal)
+
+        all_questions.extend(res_questions)
+        all_cands.extend(res_cands)
+        all_answers.extend(res_answers)
+        all_scores.extend(res_scores)
+        all_responses.extend([row['response']] * len(res_questions))
+        all_knowledge.extend([row['knowledge']] * len(res_questions))
+
         q_scores.append(res)
 
     if out_path != '':
         df['Q2'] = q_scores
         df = df[df.Q2 >= 0]
         df.to_csv(out_path)
+
+    if save_steps:
+        data = {'response': all_responses, 'cand': all_cands, 'question': all_questions, 'knowledge': all_knowledge,
+                'knowledge_ans': all_answers, 'score': all_scores}
+        steps_df = pd.DataFrame(data=data)
+        steps_df.to_csv('steps_' + out_path)
 
     valid_scores = [s for s in q_scores if s != -1]
     print("total with at least 1 valid question:", len(valid_scores))
@@ -161,6 +195,7 @@ if __name__ == '__main__':
     parser.add_argument("--personal", type=str, choices=['keep', 'remove'], default='keep', required=False,
                         help="Whether to remove personal questions.")
     parser.add_argument("--outfile", type=str, default='', required=False, help="Path to an output file")
+    parser.add_argument("--save_steps", default=False, action="store_true", help="Whether to save all pipeline steps")
     args = parser.parse_args()
 
     if args.q_per_cand == 'single':
@@ -172,4 +207,6 @@ if __name__ == '__main__':
         rm_personal = True
     else:
         rm_personal = False
-    calc_scores(args.infile, args.gen_method, single=single_q, remove_personal=rm_personal, out_path=args.outfile)
+
+    calc_scores(args.infile, args.gen_method, single=single_q, remove_personal=rm_personal,
+                out_path=args.outfile, save_steps=args.save_steps)
