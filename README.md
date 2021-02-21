@@ -6,8 +6,10 @@ Our approach is based on automatic question generation and question answering.
 
 ## Datasets
 
-The datasets are stored in the `data` folder. 
-The folder contains two files - consistent and inconsistent responses - for each of the two systems. Each file contains 150 responses.
+The datasets are available in the `third_party/data` folder.
+They are based on a subset of the [Wizard of Wikipedia](https://parl.ai/projects/wizard_of_wikipedia/) dataset.
+Specifically, we ran inference using two dialogue systems and manually annotated each response for factual consistency. 
+The data is available in four files - consistent and inconsistent responses - for each of the two systems. Each file contains 150 responses.
 In addition, we add the cross anotation file, used in our validation experiments.
 
 The datasets are stored as pandas dataframes in csv files. Loading them should be as simple as:
@@ -15,7 +17,7 @@ The datasets are stored as pandas dataframes in csv files. Loading them should b
 ```
 In [1]: import pandas as pd
 
-In [2]: data = pd.read_csv("data/dodeca_consistent.csv")
+In [2]: data = pd.read_csv("third_party/data/dodeca_consistent.csv")
 
 In [3]: data.head()
 Out[3]:
@@ -59,7 +61,7 @@ To run Q^2, run `pipeline/run_pipeline.py` and specify the parameters.
 For example:
 ```
 python pipeline/run_pipeline.py \
-      --infile data/dodeca_inconsistent.csv \
+      --infile third_party/data/dodeca_inconsistent.csv \
       --gen_method beam \
       --q_per_cand single \
       --personal remove \
