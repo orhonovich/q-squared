@@ -175,7 +175,7 @@ def calc_scores(in_path, gen_method, single, remove_personal, out_path='', save_
         data = {'response': all_responses, 'cand': all_cands, 'question': all_questions, 'knowledge': all_knowledge,
                 'knowledge_ans': all_answers, 'score': all_scores}
         steps_df = pd.DataFrame(data=data)
-        steps_df.to_csv(out_path + '.steps.txt')
+        steps_df.to_csv(out_path + '.steps.csv')
 
     valid_scores = [s for s in q_scores if s != -1]
     print("total with at least 1 valid question:", len(valid_scores))
