@@ -21,6 +21,7 @@ import spacy
 import question_generation as qg
 import question_answering as qa
 from score import f1_score, clean_text
+from tqdm import tqdm
 
 INVALID_QUESTION = -1
 NO_ANS = ''
@@ -153,7 +154,7 @@ def calc_scores(in_path, gen_method, single, remove_personal, out_path='', save_
     all_responses = []
     all_knowledge = []
 
-    for _, row in df.iterrows():
+    for _, row in tqdm(df.iterrows()):
         res, res_questions, res_cands, res_answers, res_scores =\
             get_response_score(row['response'], row['knowledge'], gen_method, single, remove_personal)
 
