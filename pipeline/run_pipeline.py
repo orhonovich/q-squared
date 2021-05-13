@@ -24,7 +24,8 @@ from score import f1_score, clean_text
 from tqdm import tqdm
 
 INVALID_QUESTION = -1
-NO_ANS = ''
+NO_ANS = '[CLS]'
+NO_VALID_QUESTIONS = 'NO_Q'
 
 nlp = spacy.load("en_core_web_sm")
 
@@ -154,7 +155,7 @@ def calc_scores(in_path, gen_method, single, remove_personal, out_path='', save_
     all_responses = []
     all_knowledge = []
 
-    for _, row in tqdm(df.iterrows()):
+    for idx, row in tqdm(df.iterrows()):
         res, res_questions, res_cands, res_answers, res_scores =\
             get_response_score(row['response'], row['knowledge'], gen_method, single, remove_personal)
 
@@ -164,6 +165,14 @@ def calc_scores(in_path, gen_method, single, remove_personal, out_path='', save_
         all_scores.extend(res_scores)
         all_responses.extend([row['response']] * len(res_questions))
         all_knowledge.extend([row['knowledge']] * len(res_questions))
+
+        if res == INVALID_QUESTION:
+            all_questions.extend([NO_VALID_QUESTIONS])
+            all_cands.extend([NO_VALID_QUESTIONS])
+            all_answers.extend([NO_VALID_QUESTIONS])
+            all_scores.extend([INVALID_QUESTION])
+            all_responses.extend([row['response'].lower()])
+            all_knowledge.extend([row['knowledge']])
 
         q_scores.append(res)
 
