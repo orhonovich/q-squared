@@ -18,13 +18,22 @@ import pandas as pd
 import numpy as np
 from scipy.stats import pearsonr, spearmanr
 
+from baselines import cross_add_baselines
+
 TOTAL = 350
+
+
+def merge_cross_annotations(dodeca_f, memnet_f):
+    df_dodeca = pd.read_csv(dodeca_f)
+    df_memnet = pd.read_csv(memnet_f)
+    merged = df_dodeca.merge(df_memnet, left_on='id', right_on='id')
+    return merged
 
 
 def bootstrap(df, qualities, metric, n_iter=1000):
 
-    dodeca_col = "dodeca_{0}".format(metric)
-    memnet_col = "memnet_{0}".format(metric)
+    dodeca_col = "{0}_x".format(metric)
+    memnet_col = "{0}_y".format(metric)
 
     correlations = []
 
@@ -42,13 +51,13 @@ def bootstrap(df, qualities, metric, n_iter=1000):
             for _, row in sampled.iterrows():
                 if curr_sample in inconsistent_sample:
                     # Select the system that had an inconsistency (labeled as 1)
-                    if int(row['dodeca_label']) == 1:
+                    if int(row['label_x']) == 1:
                         metric_scores.append(float(row[dodeca_col]))
                     else:  # memnet label is 1
                         metric_scores.append(float(row[memnet_col]))
 
                 else:  # Else, take the score for the consistent response
-                    if int(row['dodeca_label']) == 0:
+                    if int(row['label_x']) == 0:
                         metric_scores.append(float(row[dodeca_col]))
                     else:  # memnet label is 0
                         metric_scores.append(float(row[memnet_col]))
@@ -65,18 +74,21 @@ def bootstrap(df, qualities, metric, n_iter=1000):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--infile", type=str, required=True,
-                        help="Path to a csv file containing metric scores and baselines.")
+    parser.add_argument("--dodeca_path", type=str, required=True,
+                        help="Path to a csv file containing metric for the dodeca system outputs.")
+    parser.add_argument("--memnet_path", type=str, required=True,
+                        help="Path to a csv file containing metric for the memnet system outputs.")
 
     args = parser.parse_args()
-
-    df = pd.read_csv(args.infile)
+    merged = merge_cross_annotations(args.dodeca_path, args.memnet_path)
 
     # Keep examples in which one system was consistent and the other wasn't
-    df = df[df['dodeca_label'] + df['memnet_label'] == 1]
+    merged = merged[merged['label_x'] + merged['label_y'] == 1]
+    with_baselines = cross_add_baselines(merged)
+    print(len(with_baselines))
 
-    for metric in ['q2', 'overlap', 'bleu']:
-        correlations = bootstrap(df, [0.05, 0.1, 0.15, 0.2, 0.25], metric, n_iter=1000)
+    for metric in ['Q2', 'Q2_no_nli', 'overlap', 'bertscore', 'bleu']:
+        correlations = bootstrap(with_baselines, [0.05, 0.1, 0.15, 0.2, 0.25], metric, n_iter=1000)
 
         print(metric)
         print(np.mean(correlations))
