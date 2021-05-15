@@ -46,18 +46,15 @@ The key columns are:
 * torch==1.6.0
 * transformers==3.2.0
 
-To compare against baselines and run validation experiments, you'll additionaly need:
+To compare against baselines and run validation experiments, you'll additionally need:
 * scikit-learn==0.20.2
 * scipy==1.1.0
 * sacrebleu==1.4.14
 
-For the coreference-resolution preprocessing:
-* allennlp==1.0.0
-* pytorch-truecaser, which can be installed from https://github.com/mayhewsw/pytorch-truecaser
-
 
 ### Usage
-To run Q^2, run `pipeline/run_pipeline.py` and specify the parameters. 
+To run Q^2, first run `pipeline/run_pipeline.py` and specify the parameters. 
+Use the save_steps flag, which will later enable measuring answer similarity using an NLI system.
 For example:
 ```
 python pipeline/run_pipeline.py \
@@ -65,43 +62,57 @@ python pipeline/run_pipeline.py \
       --gen_method beam \
       --q_per_cand single \
       --personal remove \
-      --outfile dodeca_inconsistent_beam_single_remove.csv
+      --outfile dodeca_inconsistent_out \
+      --save_steps
 ```
+
+Then, run `nli_eval.py` with the steps file generated at the previous step (in the example above, 
+`dodeca_inconsistent_out.steps.csv`). 
+For example:
+```
+python nli_eval.py \
+      --infile dodeca_inconsistent_out.steps.csv \
+      --outfile dodeca_inconsistent_scores.csv \
+```
+
+Note that specifying `outfile` is optional.
 
 ### Validation experiments:
 
-For score robustness, first run 
+For system-level evalution, first run `pipeline/prep_sys_experiment.py` and specify the parameters.
+The `infile` should be the file containing the extended annotations, for both the dodeca and memnet systems.
 ```
-python baselines.py \
-      --infile dodeca_inconsistent_q2.csv \
-      --outfile dodeca_inconsistent_q2_baselines.csv
+python pipeline/prep_sys_experiment.py \
+      --infile third_party/data/cross_annotation.csv \
+      --outfile cross_annotation_out
 ```
 
-When the infile parameter is a csv file containing all the columns that exist in the data files, with an additional column of Q^2 scores. 
-Such file is obtained using the previous script, pipeline/run_pipeline.py.
-Run this script for each of the 4 data files, dodeca/memenet, consistent and inconsistent.
+This will create two output files - one for each system: `cross_annotation_out_dodeca.csv`, and  
+`cross_annotation_out_memnet.csv`
+Then, run `nli_eval.py` for each of the two files and use the `cross` flag:
+For example:
+```
+python nli_eval.py \
+      --infile cross_annotation_out_dodeca.csv \
+      --outfile cross_annotation_dodeca_scores.csv \
+      --cross
+```
 
-Then, run `score_robustness.py` and specify the parameters.
+Finally, run `sys_level.py` with the two files generated at the previous step.
+```
+python sys_level.py --dodeca_path cross_annotation_dodeca_scores.csv --memnet_path cross_annotation_memnet_scores.csv
+```
+
+For response-level evaluation, run `score_robustness.py` and specify the parameters.
 ```
 python score_robustness.py \
-      --incons_dodeca_f dodeca_inconsistent_q2.csv \
-      --cons_dodeca_f dodeca_consistent_q2.csv \
-	  --incons_memnet_f memnet_inconsistent_q2.csv \
-      --cons_memnet_f memnet_consistent_q2.csv
+      --incons_dodeca_f dodeca_inconsistent_scores.csv \
+      --cons_dodeca_f dodeca_consistent_scores.csv \
+	  --incons_memnet_f memnet_inconsistent_scores.csv \
+      --cons_memnet_f memnet_consistent_scores.csv
 ```
 
-For system-level evalution, first run `pipeline/prepare_files.py` and specify the parameters. For example:
-```
-python pipeline/prepare_files.py \
-      --infile cross_anotation_q2.csv \
-      --outfile cross_anotation_q2_baselines.csv
-```
-
-When the infile parameter is a csv file obtained running pipeline/run_pipeline.py on the `cross_anotation.csv` file.
-Then, run
-```
-python sys_level.py \
-      --infile cross_anotation_q2_baselines.csv
-```
+Each input file should be obtained by running `pipeline/run_pipeline.py` followed by `nli_eval.py`, as 
+explained under Usage.
 
 
