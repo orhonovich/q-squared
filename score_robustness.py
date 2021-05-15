@@ -22,58 +22,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from sklearn.metrics import precision_recall_curve
+from baselines import add_baselines
 
 sns.set_theme(style="darkgrid", font_scale=1.1)
-
-
-TOTAL = 400
-
-
-def system_at_k(inconsistent, consistent, k, n_iter=1000):
-    sys_scores = np.zeros(shape=(n_iter))
-
-    num_inconsistent = round(k*TOTAL)
-    num_consistent = TOTAL - num_inconsistent
-
-    for i in range(n_iter):
-        inconsistent_sample = np.random.choice(inconsistent, size=num_inconsistent, replace=True)
-        consistent_sample = np.random.choice(consistent, size=num_consistent, replace=True)
-
-        system = np.concatenate((inconsistent_sample, consistent_sample))
-        sys_scores[i] = np.mean(system)
-
-    low = np.mean(sys_scores) - np.percentile(sys_scores, 2.5)
-    high = np.percentile(sys_scores, 97.5) - np.mean(sys_scores)
-    return np.mean(sys_scores), low, high
-
-
-def bootstrap_robustness(metrics_scores, qualities, fig_name):
-    mean = np.array([])
-    intervals = []
-    metric_type = []
-    for metric, scores in metrics_scores.items():
-        metric_type.extend([metric] * len(qualities))
-        inconsistent = scores[0]
-        consistent = scores[1]
-        low = []
-        high = []
-        for k in qualities:
-            m, l, h = system_at_k(inconsistent, consistent, k)
-            mean = np.append(mean, m)
-            low.append(l)
-            high.append(h)
-        intervals.append([low, high])
-
-    plt.figure()
-    plt.title('Score Robustness')
-    for_plt = pd.DataFrame({"Proportion of inconsistent responses": qualities * len(metrics_scores),
-                            "Avg. score": mean, "Metric": metric_type})
-    sns_plot = sns.lineplot(data=for_plt, x='Proportion of inconsistent responses',
-                            y='Avg. score', hue='Metric').set_title("Score robustness")
-    mean = mean.reshape((len(metrics_scores), -1))
-    for i, interval in enumerate(intervals):
-        plt.errorbar(qualities, mean[i], yerr=interval, fmt='none', c='C' + str(i))
-    sns_plot.figure.savefig(fig_name)
 
 
 def plt_precision_recall(metrics_scores, fig_name):
@@ -134,6 +85,46 @@ def get_metric_scores(incons_dodeca, cons_dodeca, incons_memnet, cons_memnet, me
     return inconsistent_scores, consistent_scores
 
 
+def response_level(incons_dodeca, cons_dodeca, incons_memnet, cons_memnet):
+    scores_dict = {}
+
+    inconsistent_nli, consistent_nli = get_metric_scores(incons_dodeca, cons_dodeca,
+                                                       incons_memnet, cons_memnet, 'Q2')
+    inconsistent_no_nli, consistent_no_nli = get_metric_scores(incons_dodeca, cons_dodeca,
+                                                       incons_memnet, cons_memnet, 'Q2_no_nli')
+    # inconsistent_e2e, consistent_e2e = get_metric_scores(incons_dodeca, cons_dodeca,
+    #                                                    incons_memnet, cons_memnet, 'E2E_NLI')
+    inconsistent_overlap, consistent_overlap = get_metric_scores(incons_dodeca, cons_dodeca,
+                                                                 incons_memnet, cons_memnet, 'overlap')
+    inconsistent_bleu, consistent_bleu = get_metric_scores(incons_dodeca, cons_dodeca,
+                                                                 incons_memnet, cons_memnet, 'bleu')
+    inconsistent_bert, consistent_bert = get_metric_scores(incons_dodeca, cons_dodeca,
+                                                                 incons_memnet, cons_memnet, 'bertscore')
+
+    # Normalize BLEU scores to be in [0,1]
+    inconsistent_bleu = inconsistent_bleu / 100
+    consistent_bleu = consistent_bleu / 100
+
+    # Normalize BERTScore to be in [0,1]
+    min_bertscore = np.amin(np.append(inconsistent_bert, consistent_bert))
+    inconsistent_bert = inconsistent_bert - min_bertscore
+    consistent_bert = consistent_bert - min_bertscore
+
+    max_bertscore = np.amax(np.append(inconsistent_bert, consistent_bert))
+    inconsistent_bert = inconsistent_bert / max_bertscore
+    consistent_bert = consistent_bert / max_bertscore
+
+
+    scores_dict['Q2'] = [inconsistent_nli, consistent_nli]
+    scores_dict[r'Q2 w/o NLI'] = [inconsistent_no_nli, consistent_no_nli]
+    # scores_dict[r'E2E NLI'] = [inconsistent_e2e, consistent_e2e]
+    scores_dict['Overlap'] = [inconsistent_overlap, consistent_overlap]
+    scores_dict['BERTScore'] = [inconsistent_bert, consistent_bert]
+    scores_dict['BLEU'] = [inconsistent_bleu, consistent_bleu]
+
+    plt_precision_recall(scores_dict, 'prec_recall_curve.png')
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -143,27 +134,10 @@ if __name__ == "__main__":
     parser.add_argument("--cons_memnet_f", type=str, required=True)
     args = parser.parse_args()
 
-    incons_dodeca = pd.read_csv(args.incons_dodeca_f)
-    cons_dodeca = pd.read_csv(args.cons_dodeca_f)
-    incons_memnet = pd.read_csv(args.incons_memnet_f)
-    cons_memnet = pd.read_csv(args.cons_memnet_f)
+    incons_dodeca_df = add_baselines(pd.read_csv(args.incons_dodeca_f))
+    cons_dodeca_df = add_baselines(pd.read_csv(args.cons_dodeca_f))
+    incons_memnet_df = add_baselines(pd.read_csv(args.incons_memnet_f))
+    cons_memnet_df = add_baselines(pd.read_csv(args.cons_memnet_f))
+    response_level(incons_dodeca_df, cons_dodeca_df, incons_memnet_df, cons_memnet_df)
 
-    scores_dict = {}
 
-    inconsistent_q2, consistent_q2 = get_metric_scores(incons_dodeca, cons_dodeca,
-                                                       incons_memnet, cons_memnet, 'Q2')
-    inconsistent_overlap, consistent_overlap = get_metric_scores(incons_dodeca, cons_dodeca,
-                                                                 incons_memnet, cons_memnet, 'overlap')
-    inconsistent_bleu, consistent_bleu = get_metric_scores(incons_dodeca, cons_dodeca,
-                                                                 incons_memnet, cons_memnet, 'bleu')
-
-    scores_dict['Q2'] = [inconsistent_q2, consistent_q2]
-    scores_dict['overlap'] = [inconsistent_overlap, consistent_overlap]
-
-    bootstrap_robustness(scores_dict, [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0], 'organized_plot_new_large')
-    bootstrap_robustness(scores_dict, [1, 0.25, 0.2, 0.15, 0.1, 0.05, 0], 'organized_plot_new_small')
-
-    scores_dict['bleu'] = [inconsistent_bleu, consistent_bleu]
-    plt_precision_recall(scores_dict, 'prec_recall_new.png')
-
-    plt_hist(scores_dict, 'hist_new')
