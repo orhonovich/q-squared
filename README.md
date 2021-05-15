@@ -51,6 +51,11 @@ To compare against baselines and run validation experiments, you'll additionally
 * scipy==1.1.0
 * sacrebleu==1.4.14
 
+For the NLI-based comparison:
+* allennlp==1.0.0
+* allennlp-models==1.0.0
+
+
 
 ### Usage
 To run Q^2, first run `pipeline/run_pipeline.py` and specify the parameters. 
