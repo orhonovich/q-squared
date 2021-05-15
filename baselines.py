@@ -71,8 +71,12 @@ def length_baseline(in_path):
     print('Avg. number of tokens, no punct', np.mean(num_tokens_no_punct))
 
 
-def add_baselines(in_path, out_path):
-    df = pd.read_csv(in_path)
+def add_bertscore(pred, ref):
+    P, R, F1 = score(pred, ref, lang="en", verbose=False, rescale_with_baseline=True)
+    return F1.detach().numpy()
+
+
+def add_baselines(df, out_path=''):
     bleu = []
     overlap = []
 
@@ -92,20 +96,52 @@ def add_baselines(in_path, out_path):
         all_responses.append(response)
         all_knowledge.append(knowledge)
 
-    # Bertscore
-    P, R, F1 = score(all_responses, all_knowledge, lang="en", verbose=False, rescale_with_baseline=True)
-
     df['bleu'] = bleu
     df['overlap'] = overlap
-    df['bertscore'] = F1.detach().numpy()
+    df['bertscore'] = add_bertscore(all_responses, all_knowledge)
 
-    df.to_csv(out_path)
+    if out_path != '':
+        df.to_csv(out_path)
+    return df
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--infile", type=str, required=True, help="Path to a csv file containing q^2 scores.")
-    parser.add_argument("--outfile", type=str, required=True, help="Path to an output file")
-    args = parser.parse_args()
+def cross_add_baselines(df, out_path=''):
+    dodeca_bleu = []
+    memnet_bleu = []
 
-    add_baselines(args.infile, args.outfile)
+    dodeca_overlap = []
+    memnet_overlap = []
+
+    dodeca_all = []
+    memnet_all = []
+    knowledge_all = []
+
+    for _, row in df.iterrows():
+        dodeca_response = row['response_x']
+        memnet_response = row['response_y']
+        knowledge = row['knowledge_x'].lower()
+
+        # BLEU
+        dodeca_bleu.append(sacrebleu.corpus_bleu([dodeca_response], [[knowledge]]).score)
+        memnet_bleu.append(sacrebleu.corpus_bleu([memnet_response], [[knowledge]]).score)
+
+        # Overlap
+        dodeca_overlap.append(f1_score(knowledge, dodeca_response))
+        memnet_overlap.append(f1_score(knowledge, memnet_response))
+
+        dodeca_all.append(dodeca_response)
+        memnet_all.append(memnet_response)
+        knowledge_all.append(knowledge)
+
+    df['bleu_x'] = dodeca_bleu
+    df['bleu_y'] = memnet_bleu
+
+    df['overlap_x'] = dodeca_overlap
+    df['overlap_y'] = memnet_overlap
+
+    df['bertscore_x'] = add_bertscore(dodeca_all, knowledge_all)
+    df['bertscore_y'] = add_bertscore(memnet_all, knowledge_all)
+
+    if out_path != '':
+        df.to_csv(out_path)
+    return df
