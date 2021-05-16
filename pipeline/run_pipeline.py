@@ -154,6 +154,7 @@ def calc_scores(in_path, gen_method, single, remove_personal, out_path='', save_
     all_scores = []
     all_responses = []
     all_knowledge = []
+    ids = []
 
     for idx, row in tqdm(df.iterrows()):
         res, res_questions, res_cands, res_answers, res_scores =\
@@ -165,6 +166,7 @@ def calc_scores(in_path, gen_method, single, remove_personal, out_path='', save_
         all_scores.extend(res_scores)
         all_responses.extend([row['response']] * len(res_questions))
         all_knowledge.extend([row['knowledge']] * len(res_questions))
+        ids.extend([idx] * len(res_questions))
 
         if res == INVALID_QUESTION:
             all_questions.extend([NO_VALID_QUESTIONS])
@@ -173,6 +175,7 @@ def calc_scores(in_path, gen_method, single, remove_personal, out_path='', save_
             all_scores.extend([INVALID_QUESTION])
             all_responses.extend([row['response'].lower()])
             all_knowledge.extend([row['knowledge']])
+            ids.extend([idx])
 
         q_scores.append(res)
 
@@ -182,7 +185,7 @@ def calc_scores(in_path, gen_method, single, remove_personal, out_path='', save_
         df.to_csv(out_path)
 
     if save_steps:
-        data = {'response': all_responses, 'cand': all_cands, 'question': all_questions, 'knowledge': all_knowledge,
+        data = {'id': ids, 'response': all_responses, 'cand': all_cands, 'question': all_questions, 'knowledge': all_knowledge,
                 'knowledge_ans': all_answers, 'score': all_scores}
         steps_df = pd.DataFrame(data=data)
         steps_df.to_csv(out_path + '.steps.csv')

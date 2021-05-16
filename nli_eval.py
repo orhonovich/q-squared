@@ -63,14 +63,10 @@ def get_nli_label(question, cand, evidence_ans):
 def scores_with_nli(in_path):
     nli_scores = []
     f1_scores = []
-    responses_idx = []
 
     df = pd.read_csv(in_path)
 
-    idx = 0
     for _, row in df.iterrows():
-        idx += 1
-        responses_idx.append(idx)
         f1_score = row['score']
 
         evidence_answer = str(row['knowledge_ans'])

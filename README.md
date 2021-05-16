@@ -77,7 +77,7 @@ For example:
 ```
 python nli_eval.py \
       --infile dodeca_inconsistent_out.steps.csv \
-      --outfile dodeca_inconsistent_scores.csv \
+      --outfile dodeca_inconsistent_scores.csv
 ```
 
 Note that specifying `outfile` is optional.
