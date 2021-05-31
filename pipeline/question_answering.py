@@ -25,7 +25,7 @@ def get_answer(question, text):  # Code taken from https://huggingface.co/transf
     input_ids = inputs["input_ids"].tolist()[0]
 
     text_tokens = qa_tokenizer.convert_ids_to_tokens(input_ids)
-    answer_start_scores, answer_end_scores = qa_model(**inputs)
+    answer_start_scores, answer_end_scores = qa_model(**inputs, return_dict=False)
 
     answer_start = torch.argmax(
         answer_start_scores
