@@ -85,7 +85,10 @@ python nli_spans_comparison.py \
 
 #### Response-Level Precision and Recall
 
-For response-level evaluation, run `precision_recall.py` and specify the parameters.
+The response-level evaluation includes measuring the Precision/Recall tradeoff of inconsistency and consistency 
+detection at a single-example level, using various thresholds.
+
+To plot the Precision-Recall curve vs. various thresholds, run `precision_recall.py` and specify the parameters.
 ```
 python precision_recall.py \
       --incons_dodeca_f dodeca_inconsistent_scores.csv \
@@ -94,9 +97,18 @@ python precision_recall.py \
       --cons_memnet_f memnet_consistent_scores.csv \
       --metrics_names 'Q2' 'Q2_no_nli'
 ```
-
 Each input file should be obtained by running `pipeline/run_pipeline.py` followed by `nli_spans_comparison.py`, as 
 explained under Usage.
+
+The output files will include two plots for each input metric: grounded and ungrounded Precision and Recall vs. various 
+thresholds. If more than one metric was provided as an input, the output will include two additional plots, comparing 
+the grounded and ungrounded Precision-Recall trade-off for all input metrics. Other than the plots, the grounded and 
+ungrounded Precision and Recall, given a specific threshold, will be printed.
+
+metrics_names should be one or more space-separated names of the tested metrics.
+For the specific threshold computation, use the `thresholds` flag, which should be one or more space-separated values of 
+thresholds, one for each specified metric name selected. If thresholds weren't specified, the computation will use a 
+threshold of 0.5.
 
 To compare new metrics to q-squared, add a column containing the new metric's scores for each of the above csv files,
 and add the name of this column to the names passed in the `metrics_names` flag. Note that scores should be normalized
