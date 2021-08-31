@@ -83,6 +83,8 @@ python nli_spans_comparison.py \
 
 ### Meta-evaluation experiments:
 
+#### Response-Level Precision and Recall
+
 For response-level evaluation, run `precision_recall.py` and specify the parameters.
 ```
 python precision_recall.py \
@@ -100,6 +102,8 @@ To compare new metrics to q-squared, add a column containing the new metric's sc
 and add the name of this column to the names passed in the `metrics_names` flag. Note that scores should be normalized
 to [0,1].
 To add baseline methods to the Precision-Recall computation, specify the `add_baselines` flag.
+
+#### System-Level Evaluation
 
 For system-level evaluation, first run `pipeline/prep_sys_experiment.py` and specify the parameters.
 The `infile` should be the file containing the extended annotations, for both the dodeca and memnet systems.
