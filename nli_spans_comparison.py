@@ -32,7 +32,7 @@ CONTRADICTION_SCORE = 0
 NEUTRAL_SCORE = 0.5
 
 
-def fallback(response, knowledge):
+def e2e_nli(response, knowledge):
     res = predictor.predict(
         premise=knowledge,
         hypothesis=response
@@ -91,7 +91,7 @@ def scores_with_nli(in_path):
 
         # Add fallback NLI to responses that are not covered by Q2 (no questions generated)
         elif f1_score == NO_Q:
-            nli_fallback = fallback(str(row['response']), str(row['knowledge']).lower())
+            nli_fallback = e2e_nli(str(row['response']), str(row['knowledge']).lower())
             nli_score = nli_fallback
             f1_scores.append(nli_fallback)
         else:
@@ -104,7 +104,7 @@ def scores_with_nli(in_path):
     return df
 
 
-def aggregate_per_response(df, out_path='', cross=False):
+def aggregate_per_response(df, out_path, for_systems_simulation=False):
     f1_scores_by_id = dict()
     nli_scores_by_id = dict()
     knowledge_by_id = dict()
@@ -124,7 +124,7 @@ def aggregate_per_response(df, out_path='', cross=False):
             nli_scores_by_id[idx] = [nli_score]
             response_by_id[idx] = row['response']
             knowledge_by_id[idx] = row['knowledge']
-            if cross:
+            if for_systems_simulation:
                 label_by_id[idx] = row['label']
 
     mean_f1_scores = []
@@ -138,7 +138,7 @@ def aggregate_per_response(df, out_path='', cross=False):
         mean_nli_scores.append(np.mean(nli_scores_by_id[idx]))
         responses.append(response_by_id[idx])
         knowledge.append(knowledge_by_id[idx])
-        if cross:
+        if for_systems_simulation:
             labels.append(label_by_id[idx])
 
     print('Q2:', np.mean(mean_nli_scores))
@@ -147,20 +147,23 @@ def aggregate_per_response(df, out_path='', cross=False):
             'Q2_no_nli': mean_f1_scores, 'Q2': mean_nli_scores}
 
     res_df = pd.DataFrame(data=data)
-    if cross:
+    if for_systems_simulation:
         res_df['label'] = labels
 
-    if out_path != '':
-        res_df.to_csv(out_path)
+    res_df.to_csv(out_path)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--infile", type=str, required=True,
                         help="Path to a csv file containing token-level f1 scores.")
-    parser.add_argument("--outfile", type=str, default='', required=False, help="Path to an output file")
-    parser.add_argument("--cross", default=False, action="store_true", help="Whether to save all pipeline steps")
+    parser.add_argument("--outfile", type=str, default='', required=True, help="Path to an output file")
+    parser.add_argument("--for_systems_simulation",
+                        default=False,
+                        action="store_true",
+                        help="Whether the input was the cross annotation data, used for the systems simulation "
+                             "experiments.")
     args = parser.parse_args()
 
     with_nli_df = scores_with_nli(args.infile)
-    aggregate_per_response(with_nli_df, args.outfile, args.cross)
+    aggregate_per_response(with_nli_df, args.outfile, args.for_systems_simulation)
