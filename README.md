@@ -75,7 +75,7 @@ Then, run `nli_spans_comparison.py` with the steps file generated at the previou
 `dodeca_inconsistent_out.steps.csv`). 
 For example:
 ```
-python nli_eval.py \
+python nli_spans_comparison.py \
       --infile dodeca_inconsistent_out.steps.csv \
       --outfile dodeca_inconsistent_scores.csv
 ```
