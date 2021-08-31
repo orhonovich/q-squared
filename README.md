@@ -71,7 +71,7 @@ python pipeline/run_pipeline.py \
       --save_steps
 ```
 
-Then, run `nli_eval.py` with the steps file generated at the previous step (in the example above, 
+Then, run `nli_spans_comparison.py` with the steps file generated at the previous step (in the example above, 
 `dodeca_inconsistent_out.steps.csv`). 
 For example:
 ```
@@ -80,11 +80,28 @@ python nli_eval.py \
       --outfile dodeca_inconsistent_scores.csv
 ```
 
-Note that specifying `outfile` is optional.
 
-### Validation experiments:
+### Meta-evaluation experiments:
 
-For system-level evalution, first run `pipeline/prep_sys_experiment.py` and specify the parameters.
+For response-level evaluation, run `precision_recall.py` and specify the parameters.
+```
+python precision_recall.py \
+      --incons_dodeca_f dodeca_inconsistent_scores.csv \
+      --cons_dodeca_f dodeca_consistent_scores.csv \
+	  --incons_memnet_f memnet_inconsistent_scores.csv \
+      --cons_memnet_f memnet_consistent_scores.csv \
+      --metrics_names 'Q2' 'Q2_no_nli'
+```
+
+Each input file should be obtained by running `pipeline/run_pipeline.py` followed by `nli_spans_comparison.py`, as 
+explained under Usage.
+
+To compare new metrics to q-squared, add a column containing the new metric's scores for each of the above csv files,
+and add the name of this column to the names passed in the `metrics_names` flag. Note that scores should be normalized
+to [0,1].
+To add baseline methods to the Precision-Recall computation, specify the `add_baselines` flag.
+
+For system-level evaluation, first run `pipeline/prep_sys_experiment.py` and specify the parameters.
 The `infile` should be the file containing the extended annotations, for both the dodeca and memnet systems.
 ```
 python pipeline/prep_sys_experiment.py \
@@ -94,30 +111,18 @@ python pipeline/prep_sys_experiment.py \
 
 This will create two output files - one for each system: `cross_annotation_out_dodeca.csv`, and  
 `cross_annotation_out_memnet.csv`
-Then, run `nli_eval.py` for each of the two files and use the `cross` flag:
+Then, run `nli_spans_comparison.py` for each of the two files and use the `for_systems_simulation` flag:
 For example:
 ```
-python nli_eval.py \
+python nli_spans_comparison.py \
       --infile cross_annotation_out_dodeca.csv \
       --outfile cross_annotation_dodeca_scores.csv \
-      --cross
+      --for_systems_simulation
 ```
 
-Finally, run `sys_level.py` with the two files generated at the previous step.
+Finally, run `system_level.py` with the two files generated at the previous step.
 ```
-python sys_level.py --dodeca_path cross_annotation_dodeca_scores.csv --memnet_path cross_annotation_memnet_scores.csv
+python system_level.py --dodeca_path cross_annotation_dodeca_scores.csv --memnet_path cross_annotation_memnet_scores.csv
 ```
-
-For response-level evaluation, run `score_robustness.py` and specify the parameters.
-```
-python score_robustness.py \
-      --incons_dodeca_f dodeca_inconsistent_scores.csv \
-      --cons_dodeca_f dodeca_consistent_scores.csv \
-	  --incons_memnet_f memnet_inconsistent_scores.csv \
-      --cons_memnet_f memnet_consistent_scores.csv
-```
-
-Each input file should be obtained by running `pipeline/run_pipeline.py` followed by `nli_eval.py`, as 
-explained under Usage.
 
 
