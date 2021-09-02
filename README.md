@@ -1,7 +1,7 @@
-# Q^2
+# Q²
 
-Code and data accompanying the paper "Q^2: Evaluating Factual Consistency in Knowledge-Grounded Dialogues via Question Generation and Question Answering".
-Q^2 is a reference-less metric that aims to evaluate the factual consistency of knowledge-grounded dialogue systems.
+Code and data accompanying the paper "Q²: Evaluating Factual Consistency in Knowledge-Grounded Dialogues via Question Generation and Question Answering".
+Q² is a reference-free metric that aims to evaluate the factual consistency of knowledge-grounded dialogue systems.
 Our approach is based on automatic question generation and question answering.
 
 ## Datasets
@@ -103,7 +103,7 @@ explained under Usage.
 The output files will include two plots for each input metric: grounded and ungrounded Precision and Recall vs. various 
 thresholds. If more than one metric was provided as an input, the output will include two additional plots, comparing 
 the grounded and ungrounded Precision-Recall trade-off for all input metrics. Other than the plots, the accuracy given a
-specific threshold, as  well as the grounded and ungrounded Precision and Recall, will be printed.
+specific threshold, as well as the grounded and ungrounded Precision and Recall, will be printed.
 
 metrics_names should be one or more space-separated names of the tested metrics.
 For the specific threshold computation, use the `thresholds` flag, which should be one or more space-separated values of 
@@ -142,4 +142,20 @@ Finally, run `system_level.py` with the two files generated at the previous step
 python system_level.py --dodeca_path cross_annotation_dodeca_scores.csv --memnet_path cross_annotation_memnet_scores.csv
 ```
 
-
+### Cite
+```
+@inproceedings{honovich-etal-2021-evaluating,
+    title = "Q²: Evaluating Factual Consistency in Knowledge-Grounded Dialogues via Question Generation and Question Answering",
+    author = "Honovich, Or  and
+      Choshen, Leshem  and
+      Aharoni, Roee  and
+      Neeman, Ella  and
+      Szpektor, Idan  and
+      Abend, Omri",
+    booktitle = "Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)",
+    month = nov,
+    year = "2021",
+    publisher = "Association for Computational Linguistics",
+    url = "https://arxiv.org/abs/2104.08202",
+}
+```
