@@ -78,17 +78,23 @@ if __name__ == "__main__":
                         help="Path to a csv file containing metric for the dodeca system outputs.")
     parser.add_argument("--memnet_path", type=str, required=True,
                         help="Path to a csv file containing metric for the memnet system outputs.")
+    parser.add_argument('--metrics_names', nargs="+", required=True)
+    parser.add_argument("--add_baselines", default=False, action="store_true",
+                        help="Whether to include baseline methods in the meta-evaluation.")
 
     args = parser.parse_args()
     merged = merge_cross_annotations(args.dodeca_path, args.memnet_path)
 
     # Keep examples in which one system was consistent and the other wasn't
     merged = merged[merged['label_x'] + merged['label_y'] == 1]
-    with_baselines = cross_add_baselines(merged)
-    print(len(with_baselines))
 
-    for metric in ['Q2', 'Q2_no_nli', 'overlap', 'bertscore', 'bleu']:
-        correlations = bootstrap(with_baselines, [0.05, 0.1, 0.15, 0.2, 0.25], metric, n_iter=1000)
+    input_metrics_names = args.metrics_names
+    if args.add_baselines:
+        merged = cross_add_baselines(merged)
+        input_metrics_names.extend(['overlap', 'bleu', 'bertscore'])
+
+    for metric in input_metrics_names:
+        correlations = bootstrap(merged, [0.05, 0.1, 0.15, 0.2, 0.25], metric, n_iter=1000)
 
         print(metric)
         print(np.mean(correlations))

@@ -58,7 +58,7 @@ For the NLI-based comparison:
 
 
 ### Usage
-To run Q^2, first run `pipeline/run_pipeline.py` and specify the parameters. 
+To run Q², first run `pipeline/run_pipeline.py` and specify the parameters. 
 Use the save_steps flag, which will later enable measuring answer similarity using an NLI system.
 For example:
 ```
@@ -71,6 +71,10 @@ python pipeline/run_pipeline.py \
       --save_steps
 ```
 
+The output will be two csv files: `dodeca_inconsistent_out.csv`, and `dodeca_inconsistent_out.steps.csv`. The first will 
+contain the Q² score for each input example, without the NLI-based answer spans comparison (i.e., based on the F1 
+token-level comparison). The second file will contain the various Q² steps, i.e., generated questions and answers.
+
 Then, run `nli_spans_comparison.py` with the steps file generated at the previous step (in the example above, 
 `dodeca_inconsistent_out.steps.csv`). 
 For example:
@@ -80,6 +84,7 @@ python nli_spans_comparison.py \
       --outfile dodeca_inconsistent_scores.csv
 ```
 
+The output will be a csv file containing the Q² scores, with and without the NLI-based comparison.
 
 ### Meta-evaluation experiments
 
@@ -139,8 +144,15 @@ python nli_spans_comparison.py \
 
 Finally, run `system_level.py` with the two files generated at the previous step.
 ```
-python system_level.py --dodeca_path cross_annotation_dodeca_scores.csv --memnet_path cross_annotation_memnet_scores.csv
+python system_level.py \
+      --dodeca_path cross_annotation_dodeca_scores.csv \
+      --memnet_path cross_annotation_memnet_scores.csv \
+      --metrics_names 'Q2' 'Q2_no_nli'
 ```
+
+To add baseline methods to the Precision-Recall computation, specify the `add_baselines` flag.
+As in the response-level evaluation, to compare new metrics to q-squared, add a column containing the new metric's 
+scores for each of the above csv files, and add the name of this column to the names passed in the `metrics_names` flag.
 
 ### Cite
 ```
