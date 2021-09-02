@@ -152,7 +152,7 @@ python system_level.py --dodeca_path cross_annotation_dodeca_scores.csv --memnet
       Neeman, Ella  and
       Szpektor, Idan  and
       Abend, Omri",
-    booktitle = "Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)",
+    booktitle = "Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing (EMNLP)",
     month = nov,
     year = "2021",
     publisher = "Association for Computational Linguistics",
