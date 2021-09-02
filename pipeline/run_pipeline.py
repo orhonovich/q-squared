@@ -182,7 +182,7 @@ def calc_scores(in_path, gen_method, single, remove_personal, out_path='', save_
     if out_path != '':
         df['Q2'] = q_scores
         df = df[df.Q2 >= 0]
-        df.to_csv(out_path)
+        df.to_csv(out_path + '.csv')
 
     if save_steps:
         data = {'id': ids, 'response': all_responses, 'cand': all_cands, 'question': all_questions, 'knowledge': all_knowledge,
