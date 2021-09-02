@@ -1,6 +1,7 @@
 # Q²
 
-Code and data accompanying the paper "Q²: Evaluating Factual Consistency in Knowledge-Grounded Dialogues via Question Generation and Question Answering".
+Code and data accompanying the [paper](https://arxiv.org/abs/2104.08202) "Q²: Evaluating Factual Consistency in 
+Knowledge-Grounded Dialogues via Question Generation and Question Answering".
 Q² is a reference-free metric that aims to evaluate the factual consistency of knowledge-grounded dialogue systems.
 Our approach is based on automatic question generation and question answering.
 
