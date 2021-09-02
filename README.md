@@ -81,7 +81,7 @@ python nli_spans_comparison.py \
 ```
 
 
-### Meta-evaluation experiments:
+### Meta-evaluation experiments
 
 #### Response-Level Precision and Recall
 
@@ -102,18 +102,19 @@ explained under Usage.
 
 The output files will include two plots for each input metric: grounded and ungrounded Precision and Recall vs. various 
 thresholds. If more than one metric was provided as an input, the output will include two additional plots, comparing 
-the grounded and ungrounded Precision-Recall trade-off for all input metrics. Other than the plots, the grounded and 
-ungrounded Precision and Recall, given a specific threshold, will be printed.
+the grounded and ungrounded Precision-Recall trade-off for all input metrics. Other than the plots, the accuracy given a
+specific threshold, as  well as the grounded and ungrounded Precision and Recall, will be printed.
 
 metrics_names should be one or more space-separated names of the tested metrics.
 For the specific threshold computation, use the `thresholds` flag, which should be one or more space-separated values of 
 thresholds, one for each specified metric name selected. If thresholds weren't specified, the computation will use a 
 threshold of 0.5.
+To add baseline methods to the Precision-Recall computation, specify the `add_baselines` flag.
 
+##### Comparing to new metrics
 To compare new metrics to q-squared, add a column containing the new metric's scores for each of the above csv files,
 and add the name of this column to the names passed in the `metrics_names` flag. Note that scores should be normalized
 to [0,1].
-To add baseline methods to the Precision-Recall computation, specify the `add_baselines` flag.
 
 #### System-Level Evaluation
 
