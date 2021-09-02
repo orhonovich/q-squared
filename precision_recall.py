@@ -39,18 +39,20 @@ def compute_precision_recall_single_threshold(scores, labels, threshold):
     predictions = []
     for score in scores:
         if score <= threshold:
-          predictions.append(UNGROUNDED_LABEL)
+            predictions.append(UNGROUNDED_LABEL)
         else:
-          predictions.append(GROUNDED_LABEL)
+            predictions.append(GROUNDED_LABEL)
     grounded_precision = metrics.precision_score(y_true=labels, y_pred=predictions, pos_label=GROUNDED_LABEL)
     grounded_recall = metrics.recall_score(y_true=labels, y_pred=predictions, pos_label=GROUNDED_LABEL)
     ungrounded_precision = metrics.precision_score(y_true=labels, y_pred=predictions, pos_label=UNGROUNDED_LABEL)
     ungrounded_recall = metrics.recall_score(y_true=labels, y_pred=predictions, pos_label=UNGROUNDED_LABEL)
+    accuracy = metrics.accuracy_score(y_true=labels, y_pred=predictions)
     result_dict = {
-      'grounded_precision': grounded_precision,
-      'grounded_recall': grounded_recall,
-      'ungrounded_precision': ungrounded_precision,
-      'ungrounded_recall': ungrounded_recall
+        'grounded_precision': grounded_precision,
+        'grounded_recall': grounded_recall,
+        'ungrounded_precision': ungrounded_precision,
+        'ungrounded_recall': ungrounded_recall,
+        'accuracy': accuracy
     }
     return result_dict
 
@@ -220,22 +222,22 @@ if __name__ == "__main__":
     inconsistent_memnet = pd.read_csv(args.incons_memnet_f)
     consistent_memnet = pd.read_csv(args.cons_memnet_f)
 
-    metrics_names = args.metrics_names
-    thresholds = args.thresholds
+    input_metrics_names = args.metrics_names
+    input_thresholds = args.thresholds
     if args.add_baselines:
         inconsistent_dodeca = add_baselines(inconsistent_dodeca)
         consistent_dodeca = add_baselines(consistent_dodeca)
         inconsistent_memnet = add_baselines(inconsistent_memnet)
         consistent_memnet = add_baselines(consistent_memnet)
-        metrics_names.extend(['overlap', 'bleu', 'bertscore'])
+        input_metrics_names.extend(['overlap', 'bleu', 'bertscore'])
 
     thresholds_dict = {}
 
-    for i, metric_name in enumerate(metrics_names):
-        if thresholds:
-            thresholds_dict[metric_name] = float(thresholds[i])
+    for i, name in enumerate(input_metrics_names):
+        if input_thresholds:
+            thresholds_dict[name] = float(input_thresholds[i])
         else:
-            thresholds_dict[metric_name] = DEFAULT_THRESHOLD
+            thresholds_dict[name] = DEFAULT_THRESHOLD
 
     response_level_evaluation(inconsistent_dodeca, consistent_dodeca, inconsistent_memnet, consistent_memnet,
                               args.metrics_names, thresholds_dict)
