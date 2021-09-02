@@ -75,13 +75,14 @@ The output will be two csv files: `dodeca_inconsistent_out.csv`, and `dodeca_inc
 contain the Q² score for each input example, without the NLI-based answer spans comparison (i.e., based on the F1 
 token-level comparison). The second file will contain the various Q² steps, i.e., generated questions and answers.
 
-Then, run `nli_spans_comparison.py` with the steps file generated at the previous step (in the example above, 
+Then, run `run_nli.py` with the steps file generated at the previous step (in the example above, 
 `dodeca_inconsistent_out.steps.csv`). 
 For example:
 ```
-python nli_spans_comparison.py \
+python run_nli.py \
       --infile dodeca_inconsistent_out.steps.csv \
-      --outfile dodeca_inconsistent_scores.csv
+      --outfile dodeca_inconsistent_scores.csv \
+      --task span_comparison
 ```
 
 The output will be a csv file containing the Q² scores, with and without the NLI-based comparison.
@@ -102,7 +103,7 @@ python precision_recall.py \
       --cons_memnet_f memnet_consistent_scores.csv \
       --metrics_names 'Q2' 'Q2_no_nli'
 ```
-Each input file should be obtained by running `pipeline/run_pipeline.py` followed by `nli_spans_comparison.py`, as 
+Each input file should be obtained by running `pipeline/run_pipeline.py` followed by `run_nli.py`, as 
 explained under Usage.
 
 The output files will include two plots for each input metric: grounded and ungrounded Precision and Recall vs. various 
@@ -114,7 +115,8 @@ metrics_names should be one or more space-separated names of the tested metrics.
 For the specific threshold computation, use the `thresholds` flag, which should be one or more space-separated values of 
 thresholds, one for each specified metric name selected. If thresholds weren't specified, the computation will use a 
 threshold of 0.5.
-To add baseline methods to the Precision-Recall computation, specify the `add_baselines` flag.
+To add baseline methods to the Precision-Recall computation, specify the `add_baselines` flag. Specifying the flag will 
+add all baselines other than the end-to-end NLI. To add end-to-end NLI, see the `End-to-end NLI` section.
 
 ##### Comparing to new metrics
 To compare new metrics to q-squared, add a column containing the new metric's scores for each of the above csv files,
@@ -133,12 +135,13 @@ python pipeline/prep_sys_experiment.py \
 
 This will create two output files - one for each system: `cross_annotation_out_dodeca.csv`, and  
 `cross_annotation_out_memnet.csv`
-Then, run `nli_spans_comparison.py` for each of the two files and use the `for_systems_simulation` flag:
+Then, run `run_nli.py` for each of the two files and use the `for_systems_simulation` flag:
 For example:
 ```
-python nli_spans_comparison.py \
+python run_nli.py \
       --infile cross_annotation_out_dodeca.csv \
       --outfile cross_annotation_dodeca_scores.csv \
+      --task span_comparison \
       --for_systems_simulation
 ```
 
@@ -153,6 +156,19 @@ python system_level.py \
 To add baseline methods to the Precision-Recall computation, specify the `add_baselines` flag.
 As in the response-level evaluation, to compare new metrics to q-squared, add a column containing the new metric's 
 scores for each of the above csv files, and add the name of this column to the names passed in the `metrics_names` flag.
+
+### End-to-end NLI
+In the end-to-end NLI method, the knowledge is used as the hypothesis and the response as the premise. 
+To add the end-to-end NLI method, run
+```
+python run_nli.py \
+      --infile dodeca_inconsistent_scores.csv   \
+      --outfile dodeca_inconsistent_with_e2e_baseline.csv  \
+      --task e2e
+```
+
+Similarly for the other data files. The output file will be the input file with an additional column, containing the 
+end-to-end NLI-based factual consistency scores.
 
 ### Cite
 ```
